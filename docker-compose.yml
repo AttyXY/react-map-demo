@@ -1,0 +1,47 @@
+version: "2"
+
+services:
+    db:
+        image: mariadb
+        volumes:
+            - ./db/create.sql:/docker-entrypoint-initdb.d/create.sql
+        environment:
+            MYSQL_DATABASE_USER: root
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE_DB: entities
+            MYSQL_DATABASE_PORT: 3306
+        ports:
+            - "3307:3306"
+        container_name: db
+
+    api:
+        build: api
+        command: ["flask", "run"]
+        volumes:
+            - ./api:/api
+        environment:
+            - FLASK_ENV=development
+            - FLASK_APP=app.py
+            - FLASK_RUN_HOST=0.0.0.0
+        ports:
+            - "5001:5000"
+        depends_on:
+            - "db"
+        container_name: api
+
+    client:
+        build: client
+        command: ["npm", "start"]
+        volumes:
+            - ./client:/client
+            - node-modules:/client/node_modules
+        environment:
+            - NODE_ENV=development
+        ports:
+            - "3000:3000"
+        depends_on:
+            - api
+        container_name: client
+
+volumes:
+    node-modules:
